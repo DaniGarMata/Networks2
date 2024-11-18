@@ -6,6 +6,7 @@ using System.Threading;
 using TMPro;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.SceneManagement;  // For scene checking
 
 public class ClientUDP : MonoBehaviour
 {
@@ -18,22 +19,50 @@ public class ClientUDP : MonoBehaviour
 
     void Start()
     {
-        UItext = UItextObj.GetComponent<TextMeshProUGUI>();
-        myState = new PlayerState(0f, 0f, 0f, 0f);  // Initial state: Position (0,0) and velocity (0,0)
-        StartClient();
-    }
+        // Check if we are in the ClientScene
+        if (SceneManager.GetActiveScene().name == "ClientScene")
+        {
+            if (UItextObj != null)
+            {
+                UItext = UItextObj.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                Debug.LogError("UItextObj is not assigned in the Inspector!");
+            }
 
+            myState = new PlayerState(0f, 0f, 0f, 0f);  // Initial state: Position (0,0) and velocity (0,0)
+            StartClient();
+        }
+        else
+        {
+            clientText = "This is not the client scene.";
+        }
+    }
+    
     public void StartClient()
     {
+        // Start the main thread to send data to the server
         Thread mainThread = new Thread(Send);
         mainThread.Start();
     }
 
     void Update()
     {
-        UItext.text = clientText;
-        // Send the updated player state
-        SendPlayerState();
+        if (UItext != null)
+        {
+            UItext.text = clientText;
+        }
+        else
+        {
+            Debug.LogWarning("UItext is null! Ensure UItextObj is assigned.");
+        }
+
+        // Only send player state if we are in the ClientScene
+        if (SceneManager.GetActiveScene().name == "ClientScene")
+        {
+            SendPlayerState();
+        }
     }
 
     void SendPlayerState()

@@ -7,6 +7,7 @@ using TMPro;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.SceneManagement;  // For scene checking
 
 public class ServerUDP : MonoBehaviour
 {
@@ -20,8 +21,17 @@ public class ServerUDP : MonoBehaviour
 
     void Start()
     {
-        UItext = UItextObj.GetComponent<TextMeshProUGUI>();
-        StartServer();
+        // Only initialize the server logic if we are in the ServerScene
+        if (SceneManager.GetActiveScene().name == "ServerScene")
+        {
+            UItext = UItextObj.GetComponent<TextMeshProUGUI>();
+            StartServer();
+        }
+        else
+        {
+            // Disable the script or show a message if not in the correct scene
+            serverText = "This is not the server scene.";
+        }
     }
 
     public void StartServer()
