@@ -4,90 +4,95 @@ using System.Text;
 using UnityEngine;
 using System.Threading;
 using TMPro;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 public class ServerUDP : MonoBehaviour
 {
-    Socket socket;
+    private Socket socket;
+    private Thread receiveThread;
+    private Dictionary<IPEndPoint, PlayerState> playerStates = new Dictionary<IPEndPoint, PlayerState>();
 
     public GameObject UItextObj;
-    TextMeshProUGUI UItext;
-    string serverText;
+    private TextMeshProUGUI UItext;
+    private string serverText;
 
     void Start()
     {
         UItext = UItextObj.GetComponent<TextMeshProUGUI>();
-
+        StartServer();
     }
-    public void startServer()
+
+    public void StartServer()
     {
         serverText = "Starting UDP Server...";
-
-        //TO DO 1
-        //UDP doesn't keep track of our connections like TCP
-        //This means that we "can only" reply to other endpoints,
-        //since we don't know where or who they are
-        //We want any UDP connection that wants to communicate with 9050 port to send it to our socket.
-        //So as with TCP, we create a socket and bind it to the 9050 port. 
-
         IPEndPoint ipep = new IPEndPoint(IPAddress.Any, 9050);
         socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         socket.Bind(ipep);
 
-        //TO DO 3
-        //Our client is sending a handshake, the server has to be able to recieve it
-        //It's time to call the Receive thread
-        Thread newConnection = new Thread(Receive);
-        newConnection.Start();
+        // Start the receive thread
+        receiveThread = new Thread(Receive);
+        receiveThread.Start();
     }
 
     void Update()
     {
         UItext.text = serverText;
-
     }
 
- 
     void Receive()
     {
-
         byte[] data = new byte[1024];
-        
-        serverText = serverText + "\n" + "Waiting for new Client...";
-
-        //TO DO 3
-        //We don't know who may be comunicating with this server, so we have to create an
-        //endpoint with any address and an IpEndpoint from it to reply to it later.
         IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
-        EndPoint Remote = sender;
-
-        //Loop the whole process, and start receiveing messages directed to our socket
-        //(the one we binded to a port before)
-        //When using socket.ReceiveFrom, be sure send our remote as a reference so we can keep
-        //this adress (the client) and reply to it on TO DO 4
+        EndPoint remoteEndPoint = sender;
 
         while (true)
         {
-            int recv = socket.ReceiveFrom(data, ref Remote);
-            serverText += "\n" + "Message received from {0}:" + Remote.ToString();
-            serverText += "\n" + Encoding.ASCII.GetString(data, 0, recv);
+            int recv = socket.ReceiveFrom(data, ref remoteEndPoint);
 
-            //TO DO 4
-            //When our UDP server receives a message from a random remote, it has to send a ping,
-            //Call a send thread
-            Thread ping = new Thread(() => Send(Remote));
-            ping.Start();
+            string message = Encoding.ASCII.GetString(data, 0, recv);
+            serverText = "Message received: " + message;
+
+            // Handle PlayerState data
+            PlayerState receivedState = DeserializePlayerState(data);
+
+            // Update or add player state
+            if (playerStates.ContainsKey((IPEndPoint)remoteEndPoint))
+            {
+                playerStates[(IPEndPoint)remoteEndPoint] = receivedState;
+            }
+            else
+            {
+                playerStates.Add((IPEndPoint)remoteEndPoint, receivedState);
+            }
+
+            // Send updated player positions to all clients
+            BroadcastPlayerStates();
         }
-
     }
 
-    void Send(EndPoint Remote)
+    void BroadcastPlayerStates()
     {
-        //TO DO 4
-        //Use socket.SendTo to send a ping using the remote we stored earlier.
-        byte[] data = new byte[1024];
-        byte[] welcome = Encoding.ASCII.GetBytes("Ping");
-        socket.SendTo(welcome, welcome.Length, SocketFlags.None, Remote);
+        foreach (var entry in playerStates)
+        {
+            byte[] data = SerializePlayerState(entry.Value);
+            socket.SendTo(data, data.Length, SocketFlags.None, entry.Key);
+        }
     }
 
+    byte[] SerializePlayerState(PlayerState state)
+    {
+        MemoryStream stream = new MemoryStream();
+        BinaryFormatter formatter = new BinaryFormatter();
+        formatter.Serialize(stream, state);
+        return stream.ToArray();
+    }
 
+    PlayerState DeserializePlayerState(byte[] data)
+    {
+        MemoryStream stream = new MemoryStream(data);
+        BinaryFormatter formatter = new BinaryFormatter();
+        return (PlayerState)formatter.Deserialize(stream);
+    }
 }

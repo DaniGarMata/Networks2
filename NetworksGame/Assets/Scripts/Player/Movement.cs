@@ -1,24 +1,30 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-
     public Vector2 speed = new Vector2(100.1f, 0.1f);
-    // Start is called before the first frame update
+    private PlayerState playerState;
+
     void Start()
     {
-        
+        // Initialize PlayerState with the current position and velocity
+        playerState = new PlayerState(transform.position.x, transform.position.y, 0f, 0f);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float inputX = Input.GetAxis("Horizontal");
-        float inputY = Input.GetAxis("Vertical");
-        Debug.Log("Hit " + inputX);
+        // Update the player's state based on input
+        playerState.x += Input.GetAxis("Horizontal") * speed.x * Time.deltaTime;
+        playerState.y += Input.GetAxis("Vertical") * speed.y * Time.deltaTime;
 
-        transform.Translate(speed.x * inputX * Time.deltaTime, speed.y * inputY * Time.deltaTime, 0.0f);
+        // Update the position in the scene
+        transform.position = new Vector2(playerState.x, playerState.y);
+    }
+
+    public void SetPlayerState(PlayerState state)
+    {
+        // This method will be used to update the player position from server-side state
+        playerState = state;
+        transform.position = new Vector2(playerState.x, playerState.y);
     }
 }
