@@ -6,7 +6,7 @@ https://github.com/DaniGarMata/Networks2
 
 ## Link to release
 
--insert link here-
+https://github.com/DaniGarMata/Networks2/releases/tag/attempt
 
 ## Contributions by each team member:
 Dani:
