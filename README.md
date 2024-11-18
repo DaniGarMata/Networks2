@@ -12,7 +12,7 @@ https://github.com/DaniGarMata/Networks2
 
 ## Instructions:
 
-WASD to move
+WASD or the arrow keys to move
 
 ## Name of the main scene:
 
