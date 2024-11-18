@@ -14,9 +14,9 @@ https://github.com/DaniGarMata/Networks2
 
 WASD or the arrow keys to move
 
-## Name of the main scene:
+## Name of the main scenes:
 
-SampleScene
+ServerScene, ClientScene
 
 ## List of difficulties:
 
