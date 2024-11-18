@@ -9,12 +9,18 @@ https://github.com/DaniGarMata/Networks2
 -insert link here-
 
 ## Contributions by each team member:
+Dani:
+ - Client Script
+ - Server Script
+Sergio:
+ - Player Script
+ - Documentation
 
 ## Instructions:
 
 WASD or the arrow keys to move
 
-## Name of the main scenes:
+## Names of the main scenes:
 
 ServerScene, ClientScene
 
